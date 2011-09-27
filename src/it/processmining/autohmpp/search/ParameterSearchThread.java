@@ -1,6 +1,5 @@
-package it.processmining.autohmpp.thread;
+package it.processmining.autohmpp.search;
 
-import it.processmining.autohmpp.AutoHMPP;
 import it.processmining.autohmpp.utils.Utils;
 import it.processmining.hmpp.models.HMPPHeuristicsNet;
 import it.processmining.hmpp.models.HMPPParameters;
@@ -54,7 +53,7 @@ public class ParameterSearchThread extends Thread {
 		 * ArrayList with all the discretized values for each parameters. Each
 		 * element is an array of Double containing the possible values for the
 		 * parameter. This is the map from the index to the parameter
-		 * discratization:
+		 * discretization:
 		 *  0 - dependency threshold
 		 *  1 - positive observations
 		 *  2 - relative to best
@@ -63,6 +62,9 @@ public class ParameterSearchThread extends Thread {
 		 *  5 - length two loop
 		 *  6 - long distance dep
 		 */
+		for(int i = 0; i < 7; i++) {
+			System.out.println(discretizedParameters.get(0).length);
+		}
 		/* dependency thresholds */
 		int index_dt = randomGenerator.nextInt(discretizedParameters.get(0).length);
 		/* positive observations */

@@ -1,6 +1,5 @@
-package it.processmining.autohmpp;
+package it.processmining.autohmpp.search;
 
-import it.processmining.autohmpp.thread.ParameterSearchThread;
 import it.processmining.autohmpp.utils.Utils;
 import it.processmining.hmpp.HMPP;
 import it.processmining.hmpp.HMPPResult;
@@ -116,7 +115,7 @@ public class AutoHMPP extends HMPP {
 	
 	/* debug variables */
 	private final boolean DEBUG = true;
-	private final boolean DEBUG_START_END = true;
+	private final boolean DEBUG_START_END = false;
 	private int CALLS_DEEP = -1;
 	
 	
