@@ -1,5 +1,6 @@
-package it.processmining.autohmpp.search;
+package it.processmining.autohmpp.miner;
 
+import it.processmining.autohmpp.miner.notifier.Notifier;
 import it.processmining.autohmpp.utils.Utils;
 import it.processmining.hmpp.models.HMPPHeuristicsNet;
 import it.processmining.hmpp.models.HMPPParameters;
@@ -21,6 +22,7 @@ import org.processmining.mining.geneticmining.fitness.duplicates.DTContinuousSem
 public class ParameterSearchThread extends Thread {
 	
 	private AutoHMPP algorithm = null;
+	private Notifier notifier = null;
 	private HMPPParameters parameters = null;
 	private LogReader log = null;
 	private int greatestNetworkSize;
@@ -39,6 +41,7 @@ public class ParameterSearchThread extends Thread {
 		this.algorithm = algorithm;
 		this.log = algorithm.getLogReader();
 		this.greatestNetworkSize = algorithm.getGreatestNetworkSize();
+		this.notifier = algorithm.getNotifier();
 		this.parameters = new HMPPParameters();
 	}
 	
@@ -62,9 +65,6 @@ public class ParameterSearchThread extends Thread {
 		 *  5 - length two loop
 		 *  6 - long distance dep
 		 */
-		for(int i = 0; i < 7; i++) {
-			System.out.println(discretizedParameters.get(0).length);
-		}
 		/* dependency thresholds */
 		int index_dt = randomGenerator.nextInt(discretizedParameters.get(0).length);
 		/* positive observations */
@@ -119,6 +119,11 @@ public class ParameterSearchThread extends Thread {
 		 *  - relative to best
 		 *  - and threshold
 		 */
+		
+		// send notification for step beginning
+		notifier.stepStarts(getName(), Notifier.STEPS.SEARCH_FIRST_CLUSTER);
+		
+		int stepNo = 0;
 		do {
 			if (validateArrayIndexes(indexes, discretizedParameters)) {
 				currentCost = getMinedNetworkCost(indexes, discretizedParameters, false, true, false);
@@ -184,6 +189,14 @@ public class ParameterSearchThread extends Thread {
 								}
 								if (!log.equals("")) {
 									dbg(log);
+									
+									// send notification for new direction cost
+									String position = "[";
+									for(int i = 0; i < 4; i++) {
+										position += indexes[i] + " "; 
+									}
+									position += "]";
+									notifier.notifyDirection(getName(), stepNo, position, Integer.toString(direction), possibleCost);
 								}
 							}
 						}
@@ -225,10 +238,21 @@ public class ParameterSearchThread extends Thread {
 					stepsFirstCluster++;
 					dbg("this is new hipothesis");
 				}
+				
+				// send notification for new step
+				String position = "[";
+				for(int i = 0; i < 4; i++) {
+					position += indexes[i] + " "; 
+				}
+				position += "]";
+				notifier.notifyStep(getName(), stepNo++, position, newCost);
 			}
 			costs.add(newCost);
 			
 		} while (newCost <= currentCost && plateauStepLeft > 0);
+		
+		// send notification for step finishing
+		notifier.stepEnds(getName(), Notifier.STEPS.SEARCH_FIRST_CLUSTER);
 		
 		double bestCostBeforeLoop = currentCost;
 		HMPPParameters parametersBeforeLoop = new HMPPParameters();
@@ -254,8 +278,11 @@ public class ParameterSearchThread extends Thread {
 		 * We now try to extend our solution including these ones and, if we
 		 * obtain a better hypothesis, than we can continue.
 		 */
-		plateauStepLeft = algorithm.getMaxPlateauStep();
 		
+		// send notification for step beginning
+		notifier.stepStarts(getName(), Notifier.STEPS.SEARCH_SECOND_CLUSTER);
+		
+		plateauStepLeft = algorithm.getMaxPlateauStep();
 		do {
 			if (validateArrayIndexes(indexes, discretizedParameters)) {
 				currentCost = getMinedNetworkCost(indexes, discretizedParameters, true, true, true);
@@ -318,6 +345,14 @@ public class ParameterSearchThread extends Thread {
 							}
 							if (!log.equals("")) {
 								dbg(log);
+								
+								// send notification for new direction cost
+								String position = "[";
+								for(int i = 4; i < 7; i++) {
+									position += indexes[i] + " "; 
+								}
+								position += "]";
+								notifier.notifyDirection(getName(), stepNo, position, Integer.toString(direction), possibleCost);
 							}
 						}
 					}
@@ -355,10 +390,21 @@ public class ParameterSearchThread extends Thread {
 					stepsSecondCluster++;
 					dbg("not in plateau");
 				}
+				
+				// send notification for new step
+				String position = "[";
+				for(int i = 4; i < 7; i++) {
+					position += indexes[i] + " "; 
+				}
+				position += "]";
+				notifier.notifyStep(getName(), stepNo++, position, newCost);
 			}
 			costs.add(newCost);
 			
 		} while (newCost <= currentCost && plateauStepLeft > 0);
+		
+		// send notification for step finishing
+		notifier.stepEnds(getName(), Notifier.STEPS.SEARCH_SECOND_CLUSTER);
 		
 		double bestCostAfterLoop = currentCost;
 		HMPPParameters parametersAfterLoop = new HMPPParameters();

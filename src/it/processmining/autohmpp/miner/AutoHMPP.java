@@ -1,5 +1,6 @@
-package it.processmining.autohmpp.search;
+package it.processmining.autohmpp.miner;
 
+import it.processmining.autohmpp.miner.notifier.Notifier;
 import it.processmining.autohmpp.utils.Utils;
 import it.processmining.hmpp.HMPP;
 import it.processmining.hmpp.HMPPResult;
@@ -39,7 +40,7 @@ import cern.colt.matrix.DoubleMatrix3D;
  * This is the main class for the HeuristicsMiner++ Algorithm
  * 
  * @author Andrea Burattin
- * @version 0.3
+ * @version 0.4
  */
 public class AutoHMPP extends HMPP {
 	
@@ -106,25 +107,28 @@ public class AutoHMPP extends HMPP {
 	private HashMap<String, ArrayList<Double>> parametersCosts;
 	private ArrayList<Double[]> discretizedParameters = null;
 	
-	double[] bestInputMeasure;
-	double[] bestOutputMeasure;
-	int[] bestInputEvent;
-	int[] bestOutputEvent;
+//	double[] bestInputMeasure;
+//	double[] bestOutputMeasure;
+//	int[] bestInputEvent;
+//	int[] bestOutputEvent;
 	
 	private boolean basicRelationsMade = false;
 	
 	/* debug variables */
-	private final boolean DEBUG = true;
+	private final boolean DEBUG = false;
 	private final boolean DEBUG_START_END = false;
 	private int CALLS_DEEP = -1;
+	
+	private Notifier notifier = null;
 	
 	
 	/**
 	 * Default plugin constructor
 	 */
-	public AutoHMPP() {
+	public AutoHMPP(Notifier notifier) {
 		dbgStart();
 		parameters = new HMPPParameters();
+		this.notifier = notifier;
 		dbgEnd();
 	}
 	
@@ -515,7 +519,12 @@ public class AutoHMPP extends HMPP {
 		dbgStart();
 		
 		HashSet<Double> temp = new HashSet<Double>();
-		calculateBestRelations();
+		
+		double[] bestInputMeasure = new double[eventsSize];
+		double[] bestOutputMeasure = new double[eventsSize];
+		int[] bestInputEvent = new int[eventsSize];
+		int[] bestOutputEvent = new int[eventsSize];
+		calculateBestRelations(bestInputMeasure, bestOutputMeasure, bestInputEvent, bestOutputEvent);
 		double measure;
 		for (int i = 0; i < eventsSize; i++) {
 			for (int j = 0; j < eventsSize; j++) {
@@ -679,6 +688,9 @@ public class AutoHMPP extends HMPP {
 	 */
 	public synchronized ArrayList<Double[]> getDiscretizedParameters() {
 		dbgStart();
+		
+		notifier.stepStarts("NULL", Notifier.STEPS.PARAMETER_DISCRETIZATION);
+		
 		if (discretizedParameters == null) {
 			discretizedParameters = new ArrayList<Double[]>(7);
 			/* dependency thresholds */
@@ -695,18 +707,21 @@ public class AutoHMPP extends HMPP {
 			/* long distance dep */
 			discretizedParameters.add(6, getDiscretizedLongDistanceThreshold());
 		}
+		
+		notifier.stepEnds("NULL", Notifier.STEPS.PARAMETER_DISCRETIZATION);
+		
 		dbgEnd();
 		return discretizedParameters;
 	}
 	
 	
-	private void calculateBestRelations() {
-//		dbgStart();
+	private void calculateBestRelations(double[] bestInputMeasure, double[] bestOutputMeasure, int[] bestInputEvent, int[] bestOutputEvent) {
+		dbgStart();
 		
-		bestInputMeasure = new double[eventsSize];
-		bestOutputMeasure = new double[eventsSize];
-		bestInputEvent = new int[eventsSize];
-		bestOutputEvent = new int[eventsSize];
+//		bestInputMeasure = new double[eventsSize];
+//		bestOutputMeasure = new double[eventsSize];
+//		bestInputEvent = new int[eventsSize];
+//		bestOutputEvent = new int[eventsSize];
 		double measure;
 		
 		for (int i = 0; i < eventsSize; i++) {
@@ -736,7 +751,7 @@ public class AutoHMPP extends HMPP {
 			}
 		}
 		
-//		dbgEnd();
+		dbgEnd();
 	}
 	
 	
@@ -1044,7 +1059,12 @@ public class AutoHMPP extends HMPP {
 //				}
 //			}
 //		}
-		calculateBestRelations();
+		double[] bestInputMeasure = new double[eventsSize];
+		double[] bestOutputMeasure = new double[eventsSize];
+		int[] bestInputEvent = new int[eventsSize];
+		int[] bestOutputEvent = new int[eventsSize];
+		calculateBestRelations(bestInputMeasure, bestOutputMeasure, bestInputEvent, bestOutputEvent);
+		
 		/* Extra check for best compared with L2L-loops */
 		for (int i = 0; i < eventsSize; i++) {
 			if ((i!=bestStart) && (i!=bestEnd)) {
@@ -1978,6 +1998,10 @@ public class AutoHMPP extends HMPP {
 	
 	public int getMaxExecutionSteps() {
 		return maxSearchSteps;
+	}
+	
+	public Notifier getNotifier() {
+		return notifier;
 	}
 }
 
